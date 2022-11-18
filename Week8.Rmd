@@ -1,0 +1,56 @@
+---
+title: "Week 8"
+author: "Yuqi Gao"
+date: "2022-11-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(nycflights13)
+library(dplyr)
+```
+
+```{r}
+flights
+```
+
+```{r}
+flightsEdited <- flights %>% mutate(date=make_date(year, month, day))
+```
+
+```{r}
+flightsEdited %>% select(year, month, day, date) %>% head
+```
+
+```{r}
+daily <- flightsEdited %>% group_by(date) %>% summarise(n=n())
+head(daily)
+```
+
+```{r}
+ggplot(daily, aes(date, n))+geom_line()
+```
+
+```{r}
+updatedFlightsEdited <- flightsEdited %>% mutate(weekday=wday(date, label = TRUE)) %>% mutate(month=month(date, label = TRUE))
+head(updatedFlightsEdited)
+```
+
+```{r}
+flightsEditedJan <- flightsEdited %>% filter(month == 1) %>% group_by(date) %>% summarise(n=n())
+```
+
+```{r}
+ggplot(flightsEditedJan, aes(date, n))+geom_line()
+```
+
+```{r}
+flightsEdited %>% group_by(date, month) %>% summarise(n=n()) %>% arrange(desc(n))
+```
+
