@@ -51,6 +51,79 @@ ggplot(flightsEditedJan, aes(date, n))+geom_line()
 ```
 
 ```{r}
-flightsEdited %>% group_by(date, month) %>% summarise(n=n()) %>% arrange(desc(n))
+flightsEdited %>% filter(origin=='JFK'|dest=='JFK'|origin=='LGA'|dest=='LGA') %>% group_by(date, month) %>% summarise(n=n()) %>% arrange(desc(n))
+```
+
+```{r}
+data("mtcars")
+str(mtcars)
+```
+
+```{r}
+mcor <- cor(mtcars)
+round(mcor, digits=2)
+```
+
+```{r}
+#install.packages("corrplot")
+library(corrplot)
+corrplot(mcor)
+```
+
+```{r}
+#install.packages("GGally")
+library(GGally)
+ggcorr(mtcars)
+```
+
+```{r}
+cor.test(mtcars$cyl, mtcars$disp)
+```
+
+```{r}
+nba<-read.csv("http://datasets.flowingdata.com/ppg2008.csv", sep=",")
+head(nba)
+```
+
+```{r}
+row.names(nba) <- nba$Name
+head(nba)
+```
+
+```{r}
+nba<-nba[,2:20]
+```
+
+```{r}
+nbaMatrix <- data.matrix(nba)
+heatmap(nbaMatrix, Rowv=NA, Colv=NA, col=heat.colors(256), scale="column", margins=c(5,10))
+```
+
+```{r, include=FALSE}
+#install.packages("igraph")
+library(igraph)
+```
+
+```{r}
+gDirected<-graph(c(1,2, 2,3, 2, 4, 1,4, 5,5, 3,6))
+gDirected
+```
+
+```{r}
+plot(gDirected)
+```
+
+```{r}
+gUndirected<-graph(c(1,2, 2,3, 2, 4, 1,4, 5,5, 3,6), directed=FALSE)
+gUndirected
+```
+
+```{r}
+plot(gUndirected)
+```
+
+```{r}
+nodes<-read.csv("Dataset1-Media-Example-NODES.csv", header=T, as.is=T)
+head(nodes)
 ```
 
