@@ -2,7 +2,9 @@
 title: "Week 8"
 author: "Yuqi Gao"
 date: "2022-11-18"
-output: html_document
+output:
+  prettydoc::html_pretty:
+    theme: hpstr
 ---
 
 ```{r setup, include=FALSE}
@@ -125,5 +127,221 @@ plot(gUndirected)
 ```{r}
 nodes<-read.csv("Dataset1-Media-Example-NODES.csv", header=T, as.is=T)
 head(nodes)
+```
+
+```{r}
+links<-read.csv("Dataset1-Media-Example-EDGES.csv", header=T, as.is=T)
+head(links)
+```
+
+```{r}
+net<-graph_from_data_frame(d=links, vertices=nodes, directed=T)
+net
+```
+
+```{r}
+V(net)$media
+```
+
+```{r}
+E(net)
+```
+
+```{r}
+plot(net, edge.arrow.size=.4,vertex.label=V(net)$media, vertex.color=V(net)$media.type)
+```
+
+```{r, include=FALSE}
+#install.packages("tmap")
+library(tmap)
+#install.packages("rgdal")
+library(rgdal)
+```
+
+```{r}
+sheffieldShape<-readOGR(dsn="C:/Users/Yuqi Gao/Documents/Master/Intro to D/Week 8/Week8", layer="england_lsoa_2011")
+```
+
+```{r}
+head(sheffieldShape@data, n=2)
+```
+
+```{r, include=FALSE}
+head(sheffieldShape@polygons, n=1)
+```
+
+```{r}
+qtm(sheffieldShape)
+```
+
+```{r}
+tmap_mode("view")
+qtm(sheffieldShape)
+```
+
+```{r}
+qtm(sheffieldShape, fill = NULL)
+```
+
+
+```{r}
+tmap_mode("plot")
+```
+
+```{r}
+ deprivation2015<-
+read.csv("https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/467774/File_7_ID_2015_All_ranks__deciles_and_scores_for_the_Indices_of_Deprivation__and_population_denominators.csv")
+```
+
+```{r}
+head(deprivation2015)
+```
+
+```{r}
+deprivation2015Pop<-deprivation2015 %>% select(LSOA.name..2011.,
+LSOA.code..2011., Total.population..mid.2012..excluding.prisoners.,
+Dependent.Children.aged.0.15..mid.2012..excluding.prisoners.,
+Population.aged.16.59..mid.2012..excluding.prisoners.,
+Older.population.aged.60.and.over..mid.2012..excluding.prisoners.)
+```
+
+```{r}
+names(deprivation2015Pop)[names(deprivation2015Pop)=="LSOA.name..2011."]<-"LSOA_name"
+names(deprivation2015Pop)[names(deprivation2015Pop)=="LSOA.code..2011."]<-"LSOA_code"
+names(deprivation2015Pop)[names(deprivation2015Pop)=="Total.population..mid.2012..excluding.prisoners."]<-"Total_population"
+names(deprivation2015Pop)[names(deprivation2015Pop)=="Dependent.Children.aged.0.15..mid.2012..excluding.prisoners."]<-"Child_population"
+names(deprivation2015Pop)[names(deprivation2015Pop)=="Population.aged.16.59..mid.2012..excluding.prisoners."]<-"MidAge_population"
+names(deprivation2015Pop)[names(deprivation2015Pop)=="Older.population.aged.60.and.over..mid.2012..excluding.prisoners."]<-"Elderly_population"
+
+```
+
+```{r}
+head(deprivation2015Pop)
+```
+
+```{r}
+sheffieldShape@data<-left_join(sheffieldShape@data, deprivation2015Pop,
+by=c('code'='LSOA_code'))
+```
+
+```{r}
+qtm(sheffieldShape, fill="Total_population")
+```
+
+```{r}
+tm_shape(sheffieldShape) +
+ tm_fill("Elderly_population", style="kmeans", border.col = "black") +
+ tm_borders(alpha=0.5)
+```
+
+```{r}
+tmap_mode("view")
+tm_shape(sheffieldShape) +
+ tm_fill("Elderly_population", style="kmeans", border.col = "black") +
+ tm_borders(alpha=0.5)
+```
+
+```{r}
+tm_shape(sheffieldShape) +
+ tm_fill("MidAge_population", style="kmeans", border.col = "black") +
+ tm_borders(alpha=0.5)
+```
+
+```{r}
+sheffElderly<-tm_shape(sheffieldShape) +
+ tm_fill("Elderly_population", alpha=0.5, style="kmeans", border.col = "black") +
+ tm_borders(alpha=0.5)
+sheffElderly + tm_scale_bar()
+```
+
+```{r}
+tmap_mode("plot")
+sheffElderly + tm_scale_bar() + tm_compass(position = c("right", "top"))
+```
+
+```{r}
+tm_shape(sheffieldShape) +
+ tm_fill(c("Total_population", "Child_population", "MidAge_population",
+"Elderly_population"), title=c("Total population (mid 2012)", "Child population",
+"Adult population", "Elderly population"),
+ convert2density=TRUE) +
+ tm_borders(alpha=.5) 
+```
+
+```{r}
+crimes<-read.csv("2022-09-south-yorkshire-street.csv", header=TRUE)
+head(crimes)
+```
+
+```{r}
+crimes %>% filter(LSOA.code=="E01007321")
+```
+
+```{r}
+numCrimesByLSOA<-crimes %>%
+ select(LSOA.code, LSOA.name, Crime.type) %>%
+ group_by(LSOA.code) %>%
+ summarise(Num.crimes=n())
+```
+
+```{r}
+numCrimesByLSOA
+```
+
+```{r}
+sheffieldShape@data <- left_join(sheffieldShape@data, numCrimesByLSOA, by=c('code'='LSOA.code'))
+```
+
+```{r}
+tmap_mode("view")
+tm_shape(sheffieldShape)+tm_fill("Num.crimes", alpha = .5, style = "kmeans", border.col = "black") + tm_borders(alpha = .5)
+```
+```{r, include=FALSE}
+library(sf)
+```
+
+
+```{r}
+sum(is.na(crimes$Latitude))
+```
+```{r}
+crimes[is.na(crimes$Longitude),]<-0
+crimes[is.na(crimes$Latitude),]<-0
+```
+
+
+```{r}
+tif_data <- select(crimes, Longitude, Latitude, Crime.type)
+tif_data[is.na(tif_data$Longitude),]<-0
+tif_data[is.na(tif_data$Latitude),]<-0
+```
+
+```{r}
+crimes_sf = st_as_sf(tif_data, coords = c("Longitude", "Latitude"), crs=9372)
+tm_shape(crimes_sf) + tm_dots("Crime.type")
+```
+
+
+```{r}
+sheffieldShape[is.na(sheffieldShape@data$Num.crimes)]<-0
+
+tm_shape(sheffieldShape) +
+ tm_fill("Num.crimes", alpha=0.5, style="kmeans", border.col = "black") + 
+ tm_borders(alpha=0.5) + tm_shape(crimes_sf) + tm_dots("Crime.type")
+```
+
+```{r, include=FALSE}
+#install.packages("cartogram")
+library(cartogram)
+```
+
+```{r}
+sheffCarto<- cartogram_cont(sheffieldShape, weight="Num.crimes", itermax=10,
+prepare="adjust")
+```
+
+```{r}
+tm_shape(sheffCarto) + tm_fill("Num.crimes", style="jenks") +
+ tm_borders() + tm_layout(frame=F)
 ```
 
